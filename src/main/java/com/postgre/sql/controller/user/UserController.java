@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -17,27 +18,55 @@ public class UserController {
     private final UserService userService;
 
     public UserController(UserService userService) {
+        //createUser(new UserRegisterDto("user1", "nuevaPass123", "user1@mail.com"));
         this.userService = userService;
     }
 
     @GetMapping
     public ResponseEntity<List<UserCreatedDto>> getAllUsers(){
-        return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
+        try {
+            List<UserCreatedDto> usersFound = userService.getAllUsers();
+            if (usersFound.isEmpty()){
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(usersFound, HttpStatus.OK);
+        }catch (RuntimeException e){
+            return new ResponseEntity("An error has occurred in the server", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/{idUser}")
     public ResponseEntity<UserCreatedDto> findUserById(@PathVariable("idUser") String idUser) {
-        return new ResponseEntity<>(userService.findUserById(idUser), HttpStatus.OK);
+        try{
+            return new ResponseEntity<>(userService.findUserById(idUser), HttpStatus.OK);
+        }catch (NoSuchElementException e){
+            return new ResponseEntity("User " + idUser + " not found", HttpStatus.NOT_FOUND);
+        }
     }
 
     @PostMapping
     public ResponseEntity<UserCreatedDto> createUser(@RequestBody UserRegisterDto user) {
-        return new ResponseEntity<>(userService.createUser(user), HttpStatus.CREATED);
+        try{
+            return new ResponseEntity<>(userService.createUser(user), HttpStatus.CREATED);
+        }catch (RuntimeException e){
+            return new ResponseEntity("An error has occurred while create the user", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
     @PutMapping("/{idUser}")
     public ResponseEntity<Boolean> updateUser(@PathVariable("idUser") String idUser, @RequestBody UserRegisterDto user) {
-        return new ResponseEntity<>(userService.updateUser(idUser, user), HttpStatus.OK);
+        try {
+            Boolean isUpdated = userService.updateUser(idUser, user);
+            if (isUpdated){
+                return new ResponseEntity<>(isUpdated, HttpStatus.OK);
+            }else {
+                return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            }
+
+        }catch (NoSuchElementException e){
+            return new ResponseEntity("The user " + idUser + " doesn't exist in the data base", HttpStatus.NOT_FOUND);
+        }
     }
 
     @DeleteMapping("/{idUser}")
