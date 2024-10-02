@@ -18,7 +18,7 @@ public class UserServiceImpl implements UserService{
 
     //userRepositoryImpl
     //userMongoRepositoryImpl
-    public UserServiceImpl(@Qualifier("userRepositoryImpl") UserRepository userRepository) {
+    public UserServiceImpl(@Qualifier("userMongoRepositoryImpl") UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
